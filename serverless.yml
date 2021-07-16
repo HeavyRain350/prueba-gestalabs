@@ -1,0 +1,29 @@
+service: gl-prueba-erik-m
+
+frameworkVersion: '2'
+
+
+provider:
+  name: aws
+  runtime: python3.8
+  lambdaHashingVersion: '20201221'
+
+functions:
+  api-public:
+    handler: handler.public
+    functionName: api/public
+    events:
+      - http:
+          path: /api/public
+          method: get
+
+  api-private:
+    handler: handler.private
+    functionName: api/private
+    events:
+      - http:
+          path: /api/private
+          method: post
+
+plugins:
+  - serverless-offline
