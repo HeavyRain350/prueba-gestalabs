@@ -15,30 +15,39 @@ def public(event, context):
 ## Decorador del endpoint privado, para verificar si se lleva token jwt y si el token tiene la información solicitada
 def authorizer(func):
     def wrapper(event, context):
-        enc_jwt = json.loads(event["body"])['token']
-        try:
-            ## se trata de decodificar el token jwt con la llave
-            dec_jwt = jwt.decode(enc_jwt, 'your-256-bit-secret', algorithms=["HS256"])
+        headers = event['headers']
+        if('Authorization' in headers):
+            enc_jwt = event['headers']['Authorization']
+            try:
+                ## se trata de decodificar el token jwt con la llave
+                dec_jwt = jwt.decode(enc_jwt, 'your-256-bit-secret', algorithms=["HS256"])
 
-            ## se verifica la información del token
-            if(dec_jwt['accessKey'] == 'QWERTYUIOP' and dec_jwt['role'] == 'bot'):
+                ## se verifica la información del token
+                if(dec_jwt['accessKey'] == 'QWERTYUIOP' and dec_jwt['role'] == 'bot'):
 
-                ## una vez validado todo, se ejecuta el endpoint
-                return func(event, context)
-            else:
-                ## en caso de que no la tenga, se manda un status de no autorizado para ejecutar el endpoint
+                    ## una vez validado todo, se ejecuta el endpoint
+                    return func(event, context)
+                else:
+                    ## en caso de que no la tenga, se manda un status de no autorizado para ejecutar el endpoint
+                    body = {
+                        "message": "You are unauthorized to use this function!",
+                    }
+                    response = {"statusCode": 401, "body": json.dumps(body)}
+                    return response
+            except jwt.exceptions.DecodeError:
+                ## si el token es inválido para decodificarse con esa llave, se arroja un error 500
                 body = {
-                    "message": "You are unauthorized to use this function!",
+                    "message": "That is not a valid JWT token for the key!",
                 }
-                response = {"statusCode": 401, "body": json.dumps(body)}
+                response = {"statusCode": 500, "body": json.dumps(body)}
                 return response
-        except jwt.exceptions.DecodeError:
-            ## si el token es inválido para decodificarse con esa llave, se arroja un error 500
+        else:
             body = {
-                "message": "That is not a valid JWT token for the key!",
+                "message": "You are unauthorized to use this function!",
             }
-            response = {"statusCode": 500, "body": json.dumps(body)}
+            response = {"statusCode": 401, "body": json.dumps(body)}
             return response
+
     return wrapper
 
 ## Endpoint privado que inserta un item en la tabla items y regresa un status 200

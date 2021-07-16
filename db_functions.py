@@ -31,8 +31,9 @@ def obtain_items_last_id():
         sql = '''SELECT id FROM items ORDER BY id DESC LIMIT 1;'''
         cur = conn.cursor()
         cur = cur.execute(sql)
-        if(cur.fetchone() is not None):
-            id = cur.fetchone()[0]
+        id_tuple = cur.fetchone()
+        if(id_tuple is not None):
+            id = id_tuple[0]
         else:
             id = 0
         return id
